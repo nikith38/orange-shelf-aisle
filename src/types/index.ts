@@ -45,5 +45,5 @@ export interface CartItem {
 export interface RecommendationScore {
   productId: string;
   score: number;
-  reason: string;
+  reason?: string;
 }

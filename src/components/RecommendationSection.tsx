@@ -1,17 +1,15 @@
-
 import { Product, RecommendationScore } from '@/types';
 import { ProductCard } from './ProductCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useRef } from 'react';
+import { Tooltip } from '@/components/ui/tooltip';
+import { TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 
 interface RecommendationSectionProps {
   title: string;
   products: Product[];
   recommendations: RecommendationScore[];
   onProductClick: (product: Product) => void;
-  onLike: (productId: string) => void;
+  onLike: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   likedProducts: Set<string>;
 }
@@ -23,76 +21,55 @@ export function RecommendationSection({
   onProductClick,
   onLike,
   onAddToCart,
-  likedProducts
+  likedProducts,
 }: RecommendationSectionProps) {
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  if (!recommendations || recommendations.length === 0) {
+    return null;
+  }
 
   const recommendedProducts = recommendations
-    .map(rec => products.find(p => p.id === rec.productId))
-    .filter((product): product is Product => product !== undefined);
-
-  const scrollLeft = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
-    }
-  };
-
-  const scrollRight = () => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
-    }
-  };
+    .map(rec => {
+      const product = products.find(p => p.id === rec.productId);
+      return product ? { ...product, recommendationReason: rec.reason } : null;
+    })
+    .filter(Boolean) as (Product & { recommendationReason?: string })[];
 
   if (recommendedProducts.length === 0) {
     return null;
   }
 
   return (
-    <Card className="mb-8">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-2xl font-bold text-amazon-dark-blue">
-            {title}
-          </CardTitle>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scrollLeft}
-              className="p-2"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={scrollRight}
-              className="p-2"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div 
-          ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scrollbar-hide pb-4"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {recommendedProducts.map((product) => (
-            <div key={product.id} className="flex-shrink-0 w-64">
-              <ProductCard
-                product={product}
-                onProductClick={onProductClick}
-                onLike={onLike}
-                onAddToCart={onAddToCart}
-                isLiked={likedProducts.has(product.id)}
-              />
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {title.includes("AI") && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Info size={16} className="text-gray-500 cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs">
+                  AI-powered recommendations based on your browsing history, preferences, and similar users' behavior.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {recommendedProducts.map(product => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onProductClick={onProductClick}
+            onLike={onLike}
+            onAddToCart={onAddToCart}
+            isLiked={likedProducts.has(product.id)}
+            recommendationReason={product.recommendationReason}
+          />
+        ))}
+      </div>
+    </div>
   );
 }

@@ -1,4 +1,3 @@
-
 -- Create user profiles table
 CREATE TABLE public.profiles (
   id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
@@ -34,7 +33,9 @@ CREATE TABLE public.user_interactions (
   user_id UUID REFERENCES auth.users ON DELETE CASCADE NOT NULL,
   product_id UUID REFERENCES public.products ON DELETE CASCADE NOT NULL,
   interaction_type TEXT NOT NULL CHECK (interaction_type IN ('view', 'like', 'cart', 'purchase')),
-  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  rating DECIMAL(3,2),
+  interaction_count INTEGER DEFAULT 1,
+  last_interacted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id, product_id, interaction_type)
 );
@@ -61,12 +62,33 @@ CREATE TABLE public.cart_items (
   UNIQUE(user_id, product_id)
 );
 
+-- Create orders table
+CREATE TABLE public.orders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users ON DELETE SET NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  total DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create order items table
+CREATE TABLE public.order_items (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id UUID REFERENCES public.orders(id) ON DELETE CASCADE,
+  product_id UUID REFERENCES public.products(id) ON DELETE SET NULL,
+  quantity INTEGER NOT NULL,
+  price DECIMAL(10,2) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Enable Row Level Security
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.products ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_interactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.cart_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.order_items ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for profiles
 CREATE POLICY "Users can view their own profile" ON public.profiles
@@ -117,6 +139,20 @@ CREATE POLICY "Users can update their own cart items" ON public.cart_items
 
 CREATE POLICY "Users can delete their own cart items" ON public.cart_items
   FOR DELETE USING (auth.uid() = user_id);
+
+-- RLS Policies for orders
+CREATE POLICY "Users can read their own orders" ON public.orders
+  FOR SELECT USING (auth.uid() = user_id);
+
+-- RLS Policies for order items
+CREATE POLICY "Users can read their own order items" ON public.order_items
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.orders
+      WHERE orders.id = order_items.order_id
+      AND orders.user_id = auth.uid()
+    )
+  );
 
 -- Create function to handle new user signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()

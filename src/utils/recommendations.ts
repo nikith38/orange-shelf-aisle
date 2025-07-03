@@ -1,4 +1,5 @@
 import { Product, UserInteraction, RecommendationScore } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export class RecommendationEngine {
   private products: Product[];
@@ -216,5 +217,120 @@ export class RecommendationEngine {
       .slice(0, limit);
 
     return scores;
+  }
+}
+
+// Interaction types for tracking user behavior
+export enum InteractionType {
+  VIEW = 'view',
+  LIKE = 'like',
+  CART = 'cart',
+  PURCHASE = 'purchase'
+}
+
+/**
+ * Track a user interaction with a product
+ * @param userId The user ID
+ * @param productId The product ID
+ * @param interactionType The type of interaction (view, like, cart, purchase)
+ */
+export async function trackInteraction(
+  userId: string,
+  productId: string,
+  interactionType: InteractionType
+) {
+  if (!userId || !productId) return;
+
+  try {
+    // Check if this interaction already exists
+    const { data: existingInteraction } = await supabase
+      .from('user_interactions')
+      .select('*')
+      .eq('user_id', userId)
+      .eq('product_id', productId)
+      .eq('interaction_type', interactionType)
+      .single();
+
+    if (existingInteraction) {
+      // Update the existing interaction (update timestamp)
+      await supabase
+        .from('user_interactions')
+        .update({ 
+          interaction_count: (existingInteraction.interaction_count || 0) + 1,
+          last_interacted_at: new Date().toISOString() 
+        })
+        .eq('id', existingInteraction.id);
+    } else {
+      // Create a new interaction
+      await supabase.from('user_interactions').insert({
+        user_id: userId,
+        product_id: productId,
+        interaction_type: interactionType,
+        interaction_count: 1,
+        last_interacted_at: new Date().toISOString()
+      });
+    }
+  } catch (error) {
+    console.error('Error tracking interaction:', error);
+  }
+}
+
+/**
+ * Track a product view
+ */
+export function trackProductView(userId: string, product: Product) {
+  return trackInteraction(userId, product.id, InteractionType.VIEW);
+}
+
+/**
+ * Track a product like/unlike
+ */
+export function trackProductLike(userId: string, product: Product, isLiked: boolean) {
+  if (isLiked) {
+    return trackInteraction(userId, product.id, InteractionType.LIKE);
+  } else {
+    // Remove the like interaction if unliked
+    try {
+      return supabase
+        .from('user_interactions')
+        .delete()
+        .eq('user_id', userId)
+        .eq('product_id', product.id)
+        .eq('interaction_type', InteractionType.LIKE);
+    } catch (error) {
+      console.error('Error removing like interaction:', error);
+    }
+  }
+}
+
+/**
+ * Track adding a product to cart
+ */
+export function trackAddToCart(userId: string, product: Product) {
+  return trackInteraction(userId, product.id, InteractionType.CART);
+}
+
+/**
+ * Track a product purchase
+ */
+export function trackPurchase(userId: string, product: Product) {
+  return trackInteraction(userId, product.id, InteractionType.PURCHASE);
+}
+
+/**
+ * Get a user's interaction history
+ */
+export async function getUserInteractions(userId: string) {
+  if (!userId) return { data: [] };
+  
+  try {
+    return await supabase
+      .from('user_interactions')
+      .select('*')
+      .eq('user_id', userId)
+      .order('last_interacted_at', { ascending: false });
+  } catch (error) {
+    console.error('Error fetching user interactions:', error);
+    return { data: [] };
   }
 }

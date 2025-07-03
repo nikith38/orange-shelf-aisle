@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { Product } from '@/types';
 import { Header } from '@/components/Header';
@@ -8,6 +7,7 @@ import { CartSidebar } from '@/components/CartSidebar';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
 import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
 import { useSupabaseCart } from '@/hooks/useSupabaseCart';
+import { useCart } from '@/contexts/CartContext';
 import { useSupabaseRecommendations } from '@/hooks/useSupabaseRecommendations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { trackProductView, trackProductLike, trackAddToCart } from '@/utils/recommendations';
 
 const Index = () => {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -22,6 +23,7 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [likedProducts, setLikedProducts] = useLocalStorage<string[]>('likedProducts', []);
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   const { user, loading: authLoading, trackInteraction } = useAuth();
   const { products, loading: productsLoading } = useSupabaseProducts();
@@ -61,30 +63,43 @@ const Index = () => {
   };
 
   const handleProductClick = (product: Product) => {
-    console.log('Product clicked:', product.name);
-    trackInteraction(product.id, 'view');
-  };
-
-  const handleLike = async (productId: string) => {
-    const isLiked = likedProducts.includes(productId);
-    
-    if (isLiked) {
-      setLikedProducts(prev => prev.filter(id => id !== productId));
-    } else {
-      setLikedProducts(prev => [...prev, productId]);
-      if (user) {
-        await trackInteraction(productId, 'like');
-      }
-    }
-  };
-
-  const handleAddToCart = async (product: Product) => {
     if (user) {
-      await cart.addItem(product);
-      await trackInteraction(product.id, 'cart');
-    } else {
-      navigate('/auth');
+      trackProductView(user.id, product);
     }
+    console.log('Product clicked:', product.name);
+  };
+
+  const handleLike = (product: Product) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
+    const isCurrentlyLiked = likedProductsSet.has(product.id);
+    const newLikedProducts = new Set(likedProductsSet);
+    
+    if (isCurrentlyLiked) {
+      newLikedProducts.delete(product.id);
+    } else {
+      newLikedProducts.add(product.id);
+    }
+    
+    setLikedProducts(Array.from(newLikedProducts));
+    
+    // Track the like/unlike interaction
+    trackProductLike(user.id, product, !isCurrentlyLiked);
+  };
+
+  const handleAddToCart = (product: Product) => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+    
+    cart.addItem(product);
+    
+    // Track add to cart interaction
+    trackAddToCart(user.id, product);
   };
 
   const likedProductsSet = new Set(likedProducts);
@@ -174,6 +189,16 @@ const Index = () => {
         {/* User Recommendations */}
         {user && (
           <div className="space-y-8 mb-8">
+            <RecommendationSection
+              title="AI-Powered Recommendations"
+              products={products}
+              recommendations={recommendations.aiPowered}
+              onProductClick={handleProductClick}
+              onLike={handleLike}
+              onAddToCart={handleAddToCart}
+              likedProducts={likedProductsSet}
+            />
+            
             <RecommendationSection
               title="Recommended for You"
               products={products}

@@ -1,119 +1,150 @@
-
-import { Heart, ShoppingCart, Star } from 'lucide-react';
+import { Heart, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/types';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
-interface ProductCardProps {
+export interface ProductCardProps {
   product: Product;
   onProductClick: (product: Product) => void;
-  onLike: (productId: string) => void;
+  onLike: (product: Product) => void;
   onAddToCart: (product: Product) => void;
   isLiked: boolean;
+  recommendationReason?: string;
 }
 
-export function ProductCard({ product, onProductClick, onLike, onAddToCart, isLiked }: ProductCardProps) {
-  const handleCardClick = () => {
-    onProductClick(product);
+export function ProductCard({
+  product,
+  onProductClick,
+  onLike,
+  onAddToCart,
+  isLiked,
+  recommendationReason
+}: ProductCardProps) {
+  const { name, price, originalPrice, image, rating, category, inStock } = product;
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(price);
   };
 
-  const handleLikeClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onLike(product.id);
-  };
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating - fullStars >= 0.5;
 
-  const handleAddToCartClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onAddToCart(product);
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(<span key={`full-${i}`} className="text-yellow-400">★</span>);
+    }
+
+    if (hasHalfStar) {
+      stars.push(<span key="half" className="text-yellow-400">★</span>);
+    }
+
+    const emptyStars = 5 - stars.length;
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(<span key={`empty-${i}`} className="text-gray-300">★</span>);
+    }
+
+    return stars;
   };
 
   return (
-    <Card 
-      className="group cursor-pointer hover:shadow-product transition-all duration-300 hover:scale-105 h-full flex flex-col"
-      onClick={handleCardClick}
-    >
-      <CardContent className="p-4 flex flex-col h-full">
-        <div className="relative mb-3">
+    <Card className="h-full flex flex-col overflow-hidden hover:shadow-lg transition-shadow duration-200">
+      <div 
+        className="relative pt-4 px-4 cursor-pointer"
+        onClick={() => onProductClick(product)}
+      >
+        <div className="relative h-48 flex items-center justify-center overflow-hidden rounded-md bg-gray-100">
           <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+            src={image || '/placeholder.svg'}
+            alt={name}
+            className="object-cover transition-transform duration-300 hover:scale-105"
+            style={{ maxHeight: '100%', maxWidth: '100%' }}
+            onError={(e) => {
+              e.currentTarget.src = '/placeholder.svg';
+            }}
           />
-          {product.originalPrice && (
-            <Badge className="absolute top-2 left-2 bg-amazon-orange text-white">
-              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-            </Badge>
+          {!inStock && (
+            <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
+              <span className="text-white font-semibold text-lg">Out of Stock</span>
+            </div>
           )}
+        </div>
+        
+        <div className="absolute top-6 right-6">
           <Button
             variant="ghost"
-            size="sm"
-            className={`absolute top-2 right-2 p-1 rounded-full ${
-              isLiked 
-                ? 'text-red-500 hover:text-red-600 bg-white/80' 
-                : 'text-gray-400 hover:text-red-500 bg-white/80'
-            }`}
-            onClick={handleLikeClick}
+            size="icon"
+            className={`rounded-full ${isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              onLike(product);
+            }}
           >
-            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+            <Heart className={isLiked ? 'fill-current' : ''} size={20} />
           </Button>
         </div>
-
-        <div className="flex-1 flex flex-col">
-          <h3 className="font-semibold text-sm mb-2 line-clamp-2 text-amazon-dark-blue group-hover:text-amazon-orange transition-colors">
-            {product.name}
-          </h3>
-
-          <div className="flex items-center gap-1 mb-2">
-            <div className="flex">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`h-3 w-3 ${
-                    i < Math.floor(product.rating)
-                      ? 'text-amazon-yellow fill-current'
-                      : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-xs text-muted-foreground">
-              {product.rating} ({product.reviewCount})
-            </span>
+        
+        {originalPrice && originalPrice > price && (
+          <Badge className="absolute top-6 left-6 bg-red-500">Sale</Badge>
+        )}
+      </div>
+      
+      <CardContent className="flex-grow pt-4 cursor-pointer" onClick={() => onProductClick(product)}>
+        <div className="space-y-1.5">
+          <Badge variant="outline" className="font-normal">
+            {category}
+          </Badge>
+          <h3 className="font-semibold text-base line-clamp-2">{name}</h3>
+          <div className="flex items-center">
+            <div className="flex">{renderStars(rating)}</div>
+            <span className="text-xs text-gray-500 ml-1">({rating.toFixed(1)})</span>
           </div>
-
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-lg font-bold text-amazon-orange">
-              ${product.price.toFixed(2)}
-            </span>
-            {product.originalPrice && (
-              <span className="text-sm text-muted-foreground line-through">
-                ${product.originalPrice.toFixed(2)}
+          <div className="flex items-center gap-2">
+            <span className="font-semibold">{formatPrice(price)}</span>
+            {originalPrice && originalPrice > price && (
+              <span className="text-gray-500 line-through text-sm">
+                {formatPrice(originalPrice)}
               </span>
             )}
           </div>
-
-          <div className="flex items-center gap-1 mb-3">
-            <Badge variant="secondary" className="text-xs">
-              {product.brand}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              {product.category}
-            </Badge>
-          </div>
-
-          <div className="mt-auto">
-            <Button
-              onClick={handleAddToCartClick}
-              className="w-full bg-amazon-orange hover:bg-amazon-orange/90 text-white text-sm"
-              size="sm"
-            >
-              <ShoppingCart className="h-3 w-3 mr-2" />
-              Add to Cart
-            </Button>
-          </div>
+          
+          {recommendationReason && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <p className="text-xs text-blue-600 italic cursor-help">
+                    {recommendationReason.length > 30 
+                      ? `${recommendationReason.substring(0, 30)}...` 
+                      : recommendationReason}
+                  </p>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="max-w-xs">{recommendationReason}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
       </CardContent>
+      
+      <CardFooter className="pt-0">
+        <Button 
+          className="w-full" 
+          disabled={!inStock}
+          onClick={(e) => {
+            e.stopPropagation();
+            onAddToCart(product);
+          }}
+        >
+          <ShoppingCart className="mr-2 h-4 w-4" />
+          Add to Cart
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

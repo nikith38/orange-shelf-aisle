@@ -1,27 +1,30 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, RecommendationScore } from '@/types';
 import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useAIRecommendations } from './useAIRecommendations';
 
 export function useSupabaseRecommendations(products: Product[]) {
   const [recommendations, setRecommendations] = useState<{
     hybrid: RecommendationScore[];
     contentBased: RecommendationScore[];
     collaborative: RecommendationScore[];
+    aiPowered: RecommendationScore[];
   }>({
     hybrid: [],
     contentBased: [],
-    collaborative: []
+    collaborative: [],
+    aiPowered: []
   });
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  const { recommendations: aiRecommendations, loading: aiLoading } = useAIRecommendations(products);
 
   useEffect(() => {
     if (user && products.length > 0) {
       generateRecommendations();
     }
-  }, [user, products]);
+  }, [user, products, aiRecommendations]);
 
   const generateRecommendations = async () => {
     if (!user || products.length === 0) return;
@@ -49,7 +52,8 @@ export function useSupabaseRecommendations(products: Product[]) {
       setRecommendations({
         hybrid: hybrid.slice(0, 8),
         contentBased: contentBased.slice(0, 8),
-        collaborative: collaborative.slice(0, 8)
+        collaborative: collaborative.slice(0, 8),
+        aiPowered: aiRecommendations.slice(0, 8)
       });
     } catch (error) {
       console.error('Error generating recommendations:', error);
@@ -175,5 +179,9 @@ export function useSupabaseRecommendations(products: Product[]) {
     return Object.values(combined).sort((a, b) => b.score - a.score);
   };
 
-  return { recommendations, loading, refetch: generateRecommendations };
+  return { 
+    recommendations, 
+    loading: loading || aiLoading, 
+    refetch: generateRecommendations 
+  };
 }
