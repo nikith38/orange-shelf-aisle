@@ -2,39 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Amazon-inspired design system with orange and dark blue theme */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Amazon color palette */
+    --background: 0 0% 98%;
+    --foreground: 210 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 210 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 210 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    /* Amazon orange as primary */
+    --primary: 36 100% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* Amazon dark blue as secondary */
+    --secondary: 210 50% 20%;
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 210 15% 40%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 36 100% 50%;
+
+    /* Amazon-specific colors */
+    --amazon-orange: 36 100% 50%;
+    --amazon-dark-blue: 210 50% 20%;
+    --amazon-light-blue: 210 50% 95%;
+    --amazon-yellow: 45 100% 50%;
+    --amazon-gray: 210 15% 85%;
+    
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--amazon-orange)), hsl(45 100% 45%));
+    --gradient-header: linear-gradient(180deg, hsl(var(--amazon-dark-blue)), hsl(210 50% 15%));
+    
+    /* Shadows */
+    --shadow-card: 0 2px 8px hsl(var(--amazon-dark-blue) / 0.1);
+    --shadow-product: 0 4px 12px hsl(var(--amazon-dark-blue) / 0.15);
+    --shadow-header: 0 2px 4px hsl(var(--amazon-dark-blue) / 0.2);
 
     --radius: 0.5rem;
 

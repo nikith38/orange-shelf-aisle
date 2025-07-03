@@ -1,0 +1,145 @@
+[
+  {
+    "id": "1",
+    "name": "Wireless Bluetooth Headphones",
+    "price": 79.99,
+    "originalPrice": 99.99,
+    "rating": 4.5,
+    "reviewCount": 1247,
+    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400",
+      "https://images.unsplash.com/photo-1484704849700-f032a568e944?w=400"
+    ],
+    "category": "Electronics",
+    "description": "Premium wireless headphones with noise cancellation and 30-hour battery life.",
+    "features": ["Noise Cancellation", "30h Battery", "Bluetooth 5.0", "Fast Charging"],
+    "inStock": true,
+    "brand": "AudioTech",
+    "tags": ["wireless", "bluetooth", "headphones", "music"]
+  },
+  {
+    "id": "2",
+    "name": "Smart Fitness Watch",
+    "price": 199.99,
+    "rating": 4.7,
+    "reviewCount": 892,
+    "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400",
+      "https://images.unsplash.com/photo-1434494878577-86c23bcb06b9?w=400"
+    ],
+    "category": "Electronics",
+    "description": "Advanced fitness tracking with heart rate monitoring and GPS.",
+    "features": ["Heart Rate Monitor", "GPS Tracking", "Water Resistant", "7-day Battery"],
+    "inStock": true,
+    "brand": "FitTech",
+    "tags": ["fitness", "watch", "health", "smartwatch"]
+  },
+  {
+    "id": "3",
+    "name": "Laptop Computer",
+    "price": 899.99,
+    "originalPrice": 1199.99,
+    "rating": 4.6,
+    "reviewCount": 543,
+    "image": "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1488590528505-98d2b5aba04b?w=400",
+      "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400"
+    ],
+    "category": "Electronics",
+    "description": "High-performance laptop with 16GB RAM and 512GB SSD for work and gaming.",
+    "features": ["16GB RAM", "512GB SSD", "Intel i7", "Full HD Display"],
+    "inStock": true,
+    "brand": "TechPro",
+    "tags": ["laptop", "computer", "work", "gaming"]
+  },
+  {
+    "id": "4",
+    "name": "Organic Coffee Beans",
+    "price": 24.99,
+    "rating": 4.8,
+    "reviewCount": 2156,
+    "image": "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?w=400"
+    ],
+    "category": "Food & Beverages",
+    "description": "Premium organic coffee beans, medium roast, single origin from Colombia.",
+    "features": ["Organic", "Single Origin", "Medium Roast", "Fair Trade"],
+    "inStock": true,
+    "brand": "BrewMaster",
+    "tags": ["coffee", "organic", "beans", "colombian"]
+  },
+  {
+    "id": "5",
+    "name": "Cozy Living Room Set",
+    "price": 1299.99,
+    "originalPrice": 1699.99,
+    "rating": 4.4,
+    "reviewCount": 187,
+    "image": "https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1721322800607-8c38375eef04?w=400"
+    ],
+    "category": "Home & Garden",
+    "description": "Complete living room furniture set with sofa, coffee table, and accent chairs.",
+    "features": ["3-Piece Set", "Premium Fabric", "Assembly Included", "5 Year Warranty"],
+    "inStock": true,
+    "brand": "ComfortHome",
+    "tags": ["furniture", "living room", "sofa", "home decor"]
+  },
+  {
+    "id": "6",
+    "name": "Pet Cat Bed",
+    "price": 39.99,
+    "rating": 4.9,
+    "reviewCount": 1834,
+    "image": "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1582562124811-c09040d0a901?w=400"
+    ],
+    "category": "Pets",
+    "description": "Ultra-soft cat bed with orthopedic support and washable cover.",
+    "features": ["Orthopedic Support", "Washable Cover", "Non-slip Base", "Memory Foam"],
+    "inStock": true,
+    "brand": "PetComfort",
+    "tags": ["cat", "pet", "bed", "comfort"]
+  },
+  {
+    "id": "7",
+    "name": "Professional Camera",
+    "price": 1499.99,
+    "rating": 4.7,
+    "reviewCount": 412,
+    "image": "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400"
+    ],
+    "category": "Electronics",
+    "description": "DSLR camera with 24MP sensor and 4K video recording capabilities.",
+    "features": ["24MP Sensor", "4K Video", "Weather Sealed", "Dual Card Slots"],
+    "inStock": true,
+    "brand": "PhotoPro",
+    "tags": ["camera", "photography", "dslr", "professional"]
+  },
+  {
+    "id": "8",
+    "name": "Running Shoes",
+    "price": 129.99,
+    "originalPrice": 159.99,
+    "rating": 4.6,
+    "reviewCount": 978,
+    "image": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400",
+    "images": [
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400"
+    ],
+    "category": "Sports & Outdoors",
+    "description": "Lightweight running shoes with advanced cushioning technology.",
+    "features": ["Lightweight", "Advanced Cushioning", "Breathable Mesh", "Durable Sole"],
+    "inStock": true,
+    "brand": "RunFast",
+    "tags": ["shoes", "running", "sports", "fitness"]
+  }
+]
