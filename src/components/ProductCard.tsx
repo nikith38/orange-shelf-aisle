@@ -1,143 +1,89 @@
-import { useState } from 'react';
-import { Star, Plus, ShoppingCart } from 'lucide-react';
+
+import { Heart, ShoppingCart, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/types';
-import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
 
 interface ProductCardProps {
   product: Product;
   onProductClick: (product: Product) => void;
-  onLike?: (productId: string) => void;
-  isLiked?: boolean;
+  onLike: (productId: string) => void;
+  onAddToCart: (product: Product) => void;
+  isLiked: boolean;
 }
 
-export function ProductCard({ product, onProductClick, onLike, isLiked }: ProductCardProps) {
-  const [imageLoaded, setImageLoaded] = useState(false);
-  const { addItem } = useCart();
-  const { user, trackInteraction } = useAuth();
-  const { toast } = useToast();
-
-  const handleAddToCart = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    addItem(product);
-    trackInteraction(product.id, 'cart');
-    toast({
-      title: "Added to cart",
-      description: `${product.name} has been added to your cart.`,
-    });
-  };
-
-  const handleLike = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    onLike?.(product.id);
-    trackInteraction(product.id, 'like');
-  };
-
-  const handleProductClick = () => {
+export function ProductCard({ product, onProductClick, onLike, onAddToCart, isLiked }: ProductCardProps) {
+  const handleCardClick = () => {
     onProductClick(product);
-    trackInteraction(product.id, 'view');
   };
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={i} className="h-4 w-4 fill-amazon-yellow text-amazon-yellow" />
-      );
-    }
-
-    if (hasHalfStar) {
-      stars.push(
-        <div key="half" className="relative">
-          <Star className="h-4 w-4 text-amazon-gray" />
-          <Star className="h-4 w-4 fill-amazon-yellow text-amazon-yellow absolute top-0 left-0" style={{ clipPath: 'inset(0 50% 0 0)' }} />
-        </div>
-      );
-    }
-
-    const remainingStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < remainingStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="h-4 w-4 text-amazon-gray" />
-      );
-    }
-
-    return stars;
+  const handleLikeClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onLike(product.id);
   };
 
-  const discount = product.originalPrice ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100) : 0;
+  const handleAddToCartClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAddToCart(product);
+  };
 
   return (
     <Card 
-      className="group cursor-pointer transition-all duration-300 hover:shadow-product border-amazon-gray/20 hover:border-amazon-orange/30 bg-card hover:scale-[1.02]"
-      onClick={handleProductClick}
+      className="group cursor-pointer hover:shadow-product transition-all duration-300 hover:scale-105 h-full flex flex-col"
+      onClick={handleCardClick}
     >
-      <CardContent className="p-4">
-        {/* Product Image */}
-        <div className="relative mb-3 overflow-hidden rounded-lg bg-amazon-light-blue">
-          <div className="aspect-square relative">
-            {!imageLoaded && (
-              <div className="absolute inset-0 bg-amazon-gray/20 animate-pulse rounded-lg" />
-            )}
-            <img
-              src={product.image}
-              alt={product.name}
-              className={`w-full h-full object-cover transition-all duration-300 group-hover:scale-105 ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              onLoad={() => setImageLoaded(true)}
-              loading="lazy"
-            />
-            
-            {/* Discount Badge */}
-            {discount > 0 && (
-              <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-                -{discount}%
-              </Badge>
-            )}
-
-            {/* Like Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className={`absolute top-2 right-2 h-8 w-8 p-0 rounded-full bg-white/80 hover:bg-white ${
-                isLiked ? 'text-destructive' : 'text-amazon-dark-blue'
-              }`}
-              onClick={handleLike}
-            >
-              <Plus className={`h-4 w-4 transition-transform ${isLiked ? 'rotate-45' : ''}`} />
-            </Button>
-          </div>
+      <CardContent className="p-4 flex flex-col h-full">
+        <div className="relative mb-3">
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-48 object-cover rounded-md group-hover:scale-105 transition-transform duration-300"
+          />
+          {product.originalPrice && (
+            <Badge className="absolute top-2 left-2 bg-amazon-orange text-white">
+              {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+            </Badge>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className={`absolute top-2 right-2 p-1 rounded-full ${
+              isLiked 
+                ? 'text-red-500 hover:text-red-600 bg-white/80' 
+                : 'text-gray-400 hover:text-red-500 bg-white/80'
+            }`}
+            onClick={handleLikeClick}
+          >
+            <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
+          </Button>
         </div>
 
-        {/* Product Info */}
-        <div className="space-y-2">
-          {/* Brand */}
-          <p className="text-sm text-amazon-dark-blue font-medium">{product.brand}</p>
-          
-          {/* Product Name */}
-          <h3 className="font-medium text-foreground line-clamp-2 group-hover:text-amazon-dark-blue transition-colors">
+        <div className="flex-1 flex flex-col">
+          <h3 className="font-semibold text-sm mb-2 line-clamp-2 text-amazon-dark-blue group-hover:text-amazon-orange transition-colors">
             {product.name}
           </h3>
 
-          {/* Rating */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center">
-              {renderStars(product.rating)}
+          <div className="flex items-center gap-1 mb-2">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`h-3 w-3 ${
+                    i < Math.floor(product.rating)
+                      ? 'text-amazon-yellow fill-current'
+                      : 'text-gray-300'
+                  }`}
+                />
+              ))}
             </div>
-            <span className="text-sm text-muted-foreground">({product.reviewCount})</span>
+            <span className="text-xs text-muted-foreground">
+              {product.rating} ({product.reviewCount})
+            </span>
           </div>
 
-          {/* Price */}
-          <div className="flex items-center gap-2">
-            <span className="text-xl font-bold text-foreground">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-lg font-bold text-amazon-orange">
               ${product.price.toFixed(2)}
             </span>
             {product.originalPrice && (
@@ -147,22 +93,25 @@ export function ProductCard({ product, onProductClick, onLike, isLiked }: Produc
             )}
           </div>
 
-          {/* Stock Status */}
-          {product.inStock ? (
-            <p className="text-sm text-green-600 font-medium">In Stock</p>
-          ) : (
-            <p className="text-sm text-destructive font-medium">Out of Stock</p>
-          )}
+          <div className="flex items-center gap-1 mb-3">
+            <Badge variant="secondary" className="text-xs">
+              {product.brand}
+            </Badge>
+            <Badge variant="outline" className="text-xs">
+              {product.category}
+            </Badge>
+          </div>
 
-          {/* Add to Cart Button */}
-          <Button
-            onClick={handleAddToCart}
-            disabled={!product.inStock}
-            className="w-full bg-amazon-orange hover:bg-amazon-orange/90 text-white font-medium py-2 mt-3"
-          >
-            <ShoppingCart className="h-4 w-4 mr-2" />
-            Add to Cart
-          </Button>
+          <div className="mt-auto">
+            <Button
+              onClick={handleAddToCartClick}
+              className="w-full bg-amazon-orange hover:bg-amazon-orange/90 text-white text-sm"
+              size="sm"
+            >
+              <ShoppingCart className="h-3 w-3 mr-2" />
+              Add to Cart
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>

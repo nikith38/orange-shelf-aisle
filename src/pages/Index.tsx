@@ -1,29 +1,33 @@
+
 import { useState, useEffect, useMemo } from 'react';
-import { Product, UserInteraction } from '@/types';
+import { Product } from '@/types';
 import { Header } from '@/components/Header';
 import { ProductCard } from '@/components/ProductCard';
 import { RecommendationSection } from '@/components/RecommendationSection';
-import { LoginModal } from '@/components/LoginModal';
 import { CartSidebar } from '@/components/CartSidebar';
-import { RecommendationEngine } from '@/utils/recommendations';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseProducts } from '@/hooks/useSupabaseProducts';
+import { useSupabaseCart } from '@/hooks/useSupabaseCart';
+import { useSupabaseRecommendations } from '@/hooks/useSupabaseRecommendations';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star } from 'lucide-react';
-import productsData from '@/data/products.json';
+import { useNavigate } from 'react-router-dom';
 
 const Index = () => {
-  const [products] = useState<Product[]>(productsData);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [likedProducts, setLikedProducts] = useLocalStorage<string[]>('likedProducts', []);
   
-  const { user, getUserInteractions, trackInteraction } = useAuth();
+  const { user, loading: authLoading, trackInteraction } = useAuth();
+  const { products, loading: productsLoading } = useSupabaseProducts();
+  const cart = useSupabaseCart();
+  const { recommendations } = useSupabaseRecommendations(products);
+  const navigate = useNavigate();
 
   // Get unique categories
   const categories = useMemo(() => {
@@ -52,39 +56,35 @@ const Index = () => {
     setFilteredProducts(filtered);
   }, [products, selectedCategory, searchQuery]);
 
-  // Recommendation engine
-  const recommendationEngine = useMemo(() => {
-    const interactions = getUserInteractions();
-    return new RecommendationEngine(products, interactions);
-  }, [products, getUserInteractions]);
-
-  // Get recommendations
-  const recommendations = useMemo(() => {
-    if (!user) return { hybrid: [], similar: [], collaborative: [] };
-    
-    return {
-      hybrid: recommendationEngine.getHybridRecommendations(8),
-      collaborative: recommendationEngine.getCollaborativeRecommendations(8),
-      contentBased: recommendationEngine.getContentBasedRecommendations(8)
-    };
-  }, [recommendationEngine, user]);
-
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
   const handleProductClick = (product: Product) => {
     console.log('Product clicked:', product.name);
-    // In a real app, this would navigate to product detail page
     trackInteraction(product.id, 'view');
   };
 
-  const handleLike = (productId: string) => {
-    setLikedProducts(prev => 
-      prev.includes(productId) 
-        ? prev.filter(id => id !== productId)
-        : [...prev, productId]
-    );
+  const handleLike = async (productId: string) => {
+    const isLiked = likedProducts.includes(productId);
+    
+    if (isLiked) {
+      setLikedProducts(prev => prev.filter(id => id !== productId));
+    } else {
+      setLikedProducts(prev => [...prev, productId]);
+      if (user) {
+        await trackInteraction(productId, 'like');
+      }
+    }
+  };
+
+  const handleAddToCart = async (product: Product) => {
+    if (user) {
+      await cart.addItem(product);
+      await trackInteraction(product.id, 'cart');
+    } else {
+      navigate('/auth');
+    }
   };
 
   const likedProductsSet = new Set(likedProducts);
@@ -101,7 +101,7 @@ const Index = () => {
         </p>
         {!user && (
           <Button 
-            onClick={() => setIsLoginModalOpen(true)}
+            onClick={() => navigate('/auth')}
             size="lg"
             className="bg-white text-amazon-dark-blue hover:bg-amazon-light-blue font-bold py-3 px-8"
           >
@@ -130,12 +130,23 @@ const Index = () => {
     </div>
   );
 
+  if (authLoading || productsLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-amazon-orange mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Header
         onSearch={handleSearch}
         onCartClick={() => setIsCartOpen(true)}
-        onLoginClick={() => setIsLoginModalOpen(true)}
+        onLoginClick={() => navigate('/auth')}
         onProfileClick={() => console.log('Profile clicked')}
       />
 
@@ -169,6 +180,7 @@ const Index = () => {
               recommendations={recommendations.hybrid}
               onProductClick={handleProductClick}
               onLike={handleLike}
+              onAddToCart={handleAddToCart}
               likedProducts={likedProductsSet}
             />
             
@@ -178,6 +190,7 @@ const Index = () => {
               recommendations={recommendations.contentBased}
               onProductClick={handleProductClick}
               onLike={handleLike}
+              onAddToCart={handleAddToCart}
               likedProducts={likedProductsSet}
             />
           </div>
@@ -212,6 +225,7 @@ const Index = () => {
                     product={product}
                     onProductClick={handleProductClick}
                     onLike={handleLike}
+                    onAddToCart={handleAddToCart}
                     isLiked={likedProductsSet.has(product.id)}
                   />
                 ))}
@@ -226,7 +240,9 @@ const Index = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {categories.slice(1).map((category) => {
               const categoryProducts = products.filter(p => p.category === category);
-              const avgRating = categoryProducts.reduce((sum, p) => sum + p.rating, 0) / categoryProducts.length;
+              const avgRating = categoryProducts.length > 0 
+                ? categoryProducts.reduce((sum, p) => sum + p.rating, 0) / categoryProducts.length 
+                : 0;
               
               return (
                 <Card 
@@ -251,12 +267,7 @@ const Index = () => {
         </div>
       </main>
 
-      {/* Modals and Sidebars */}
-      <LoginModal
-        isOpen={isLoginModalOpen}
-        onClose={() => setIsLoginModalOpen(false)}
-      />
-      
+      {/* Cart Sidebar */}
       <CartSidebar
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}

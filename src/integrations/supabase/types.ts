@@ -9,7 +9,184 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      cart_items: {
+        Row: {
+          created_at: string | null
+          id: string
+          product_id: string
+          quantity: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          product_id: string
+          quantity?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          product_id?: string
+          quantity?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cart_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          brand: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          features: string[] | null
+          id: string
+          image: string | null
+          images: string[] | null
+          in_stock: boolean | null
+          name: string
+          original_price: number | null
+          price: number
+          rating: number | null
+          review_count: number | null
+          tags: string[] | null
+        }
+        Insert: {
+          brand?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          in_stock?: boolean | null
+          name: string
+          original_price?: number | null
+          price: number
+          rating?: number | null
+          review_count?: number | null
+          tags?: string[] | null
+        }
+        Update: {
+          brand?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          features?: string[] | null
+          id?: string
+          image?: string | null
+          images?: string[] | null
+          in_stock?: boolean | null
+          name?: string
+          original_price?: number | null
+          price?: number
+          rating?: number | null
+          review_count?: number | null
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email: string
+          id: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_interactions: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string
+          product_id: string
+          rating: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          product_id: string
+          rating?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          product_id?: string
+          rating?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_interactions_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          brands: string[] | null
+          categories: string[] | null
+          id: string
+          price_range_max: number | null
+          price_range_min: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          brands?: string[] | null
+          categories?: string[] | null
+          id?: string
+          price_range_max?: number | null
+          price_range_min?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          brands?: string[] | null
+          categories?: string[] | null
+          id?: string
+          price_range_max?: number | null
+          price_range_min?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

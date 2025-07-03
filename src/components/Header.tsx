@@ -1,10 +1,11 @@
+
 import { useState } from 'react';
-import { Search, ShoppingCart, User, Star } from 'lucide-react';
+import { Search, ShoppingCart, User, Menu, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { useAuth } from '@/contexts/AuthContext';
-import { useCart } from '@/contexts/CartContext';
+import { useAuth } from '@/contexts/SupabaseAuthContext';
+import { useSupabaseCart } from '@/hooks/useSupabaseCart';
 
 interface HeaderProps {
   onSearch: (query: string) => void;
@@ -15,121 +16,167 @@ interface HeaderProps {
 
 export function Header({ onSearch, onCartClick, onLoginClick, onProfileClick }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const { user } = useAuth();
-  const { items } = useCart();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const { getTotalItems } = useSupabaseCart();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     onSearch(searchQuery);
   };
 
-  const cartItemCount = items.reduce((total, item) => total + item.quantity, 0);
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMobileMenuOpen(false);
+  };
 
   return (
-    <header className="bg-gradient-header shadow-header sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-3">
-        <div className="flex items-center gap-4">
+    <header className="bg-amazon-dark-blue text-white shadow-lg">
+      <div className="container mx-auto px-4">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
-            <div className="text-2xl font-bold text-white">
-              Amazon<span className="text-amazon-orange">Style</span>
-            </div>
+          <div className="flex items-center">
+            <h1 className="text-2xl font-bold text-amazon-orange">Amazon Style</h1>
           </div>
 
-          {/* Search Bar */}
-          <form onSubmit={handleSearch} className="flex-1 max-w-2xl mx-4">
-            <div className="relative">
+          {/* Search Bar - Desktop */}
+          <div className="hidden md:flex flex-1 max-w-2xl mx-8">
+            <form onSubmit={handleSearch} className="flex w-full">
               <Input
                 type="text"
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-4 pr-12 py-3 text-lg border-0 rounded-md"
+                className="flex-1 rounded-r-none border-r-0 focus:ring-amazon-orange focus:border-amazon-orange"
               />
               <Button
                 type="submit"
-                size="sm"
-                className="absolute right-1 top-1 bottom-1 px-4 bg-amazon-orange hover:bg-amazon-orange/90"
+                className="bg-amazon-orange hover:bg-amazon-orange/90 rounded-l-none px-4"
               >
                 <Search className="h-4 w-4" />
               </Button>
-            </div>
-          </form>
+            </form>
+          </div>
 
-          {/* Right Side */}
-          <div className="flex items-center gap-4">
-            {/* User Account */}
+          {/* Right side - Desktop */}
+          <div className="hidden md:flex items-center space-x-4">
             {user ? (
-              <Button
-                variant="ghost"
-                onClick={onProfileClick}
-                className="text-white hover:bg-white/10 flex flex-col items-start p-2"
-              >
-                <span className="text-xs">Hello, {user.name}</span>
-                <span className="text-sm font-semibold">Account & Lists</span>
-              </Button>
+              <>
+                <div className="text-sm">
+                  <p className="text-amazon-light-blue">Hello, {user.user_metadata?.name || user.email}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  onClick={handleSignOut}
+                  className="text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
+                >
+                  Sign Out
+                </Button>
+              </>
             ) : (
               <Button
                 variant="ghost"
                 onClick={onLoginClick}
-                className="text-white hover:bg-white/10 flex flex-col items-start p-2"
+                className="text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
               >
-                <span className="text-xs">Hello, sign in</span>
-                <span className="text-sm font-semibold">Account & Lists</span>
+                <User className="h-4 w-4 mr-2" />
+                Sign In
               </Button>
             )}
-
-            {/* Cart */}
+            
             <Button
               variant="ghost"
               onClick={onCartClick}
-              className="text-white hover:bg-white/10 relative p-2"
+              className="relative text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
             >
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  <ShoppingCart className="h-6 w-6" />
-                  {cartItemCount > 0 && (
-                    <Badge 
-                      variant="destructive" 
-                      className="absolute -top-2 -right-2 bg-amazon-orange text-white min-w-[20px] h-5 rounded-full text-xs flex items-center justify-center"
-                    >
-                      {cartItemCount}
-                    </Badge>
-                  )}
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="text-xs">Cart</span>
-                </div>
-              </div>
+              <ShoppingCart className="h-5 w-5" />
+              {getTotalItems() > 0 && (
+                <Badge className="absolute -top-2 -right-2 bg-amazon-orange text-white text-xs min-w-[1.25rem] h-5 flex items-center justify-center">
+                  {getTotalItems()}
+                </Badge>
+              )}
             </Button>
           </div>
+
+          {/* Mobile menu button */}
+          <Button
+            variant="ghost"
+            className="md:hidden text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
         </div>
 
-        {/* Navigation */}
-        <nav className="flex items-center gap-6 mt-2 text-sm">
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            All
-          </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            Electronics
-          </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            Home & Garden
-          </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            Sports & Outdoors
-          </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            Food & Beverages
-          </Button>
-          <Button variant="ghost" className="text-white hover:bg-white/10 text-sm p-2">
-            Pets
-          </Button>
-          <div className="flex items-center gap-1 text-amazon-orange">
-            <Star className="h-4 w-4 fill-current" />
-            <span>Today's Deals</span>
+        {/* Mobile Search Bar */}
+        <div className="md:hidden pb-4">
+          <form onSubmit={handleSearch} className="flex">
+            <Input
+              type="text"
+              placeholder="Search products..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex-1 rounded-r-none border-r-0"
+            />
+            <Button
+              type="submit"
+              className="bg-amazon-orange hover:bg-amazon-orange/90 rounded-l-none px-4"
+            >
+              <Search className="h-4 w-4" />
+            </Button>
+          </form>
+        </div>
+
+        {/* Mobile Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden border-t border-amazon-light-blue/20 py-4">
+            <div className="space-y-4">
+              {user ? (
+                <>
+                  <div className="text-sm text-amazon-light-blue">
+                    Hello, {user.user_metadata?.name || user.email}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    onClick={handleSignOut}
+                    className="w-full justify-start text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
+                  >
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    onLoginClick();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full justify-start text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+              )}
+              
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  onCartClick();
+                  setIsMobileMenuOpen(false);
+                }}
+                className="w-full justify-start relative text-white hover:text-amazon-orange hover:bg-amazon-dark-blue/50"
+              >
+                <ShoppingCart className="h-5 w-5 mr-2" />
+                Cart
+                {getTotalItems() > 0 && (
+                  <Badge className="ml-auto bg-amazon-orange text-white">
+                    {getTotalItems()}
+                  </Badge>
+                )}
+              </Button>
+            </div>
           </div>
-        </nav>
+        )}
       </div>
     </header>
   );
